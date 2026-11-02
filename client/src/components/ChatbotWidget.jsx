@@ -31,7 +31,7 @@ import {
 
 // API Base URL for Chat backend (routed through Node.js backend on port 5000)
 const API_BASE = (
-  import.meta.env.VITE_CHAT_API_BASE_URL || 'http://localhost:5000/api/chat'
+  import.meta.env.VITE_CHAT_API_BASE_URL || '/api/chat'
 ).replace(/\/+$/, '');
 
 // Bot persona configurations

@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
+const fs = require('fs');
 
 // Load environment variables
 dotenv.config();
@@ -36,10 +38,23 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Root endpoint
-app.get('/', (req, res) => {
-  res.send('Chatbot Auth Backend API running smoothly.');
-});
+// Serve static React build files if client/dist exists (production)
+const clientDistPath = path.join(__dirname, '../client/dist');
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+} else {
+  // Root endpoint fallback if frontend is not built
+  app.get('/', (req, res) => {
+    res.send('Chatbot Auth Backend API running smoothly.');
+  });
+}
 
 // 404 Handler
 app.use((req, res) => {

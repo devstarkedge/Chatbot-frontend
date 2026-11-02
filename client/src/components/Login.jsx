@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 const API_BASE_URL =
-  import.meta.env.VITE_AUTH_API_BASE_URL || 'http://localhost:5000/api/auth';
+  import.meta.env.VITE_AUTH_API_BASE_URL || '/api/auth';
 
 function Login({ onLoginSuccess }) {
   const [formData, setFormData] = useState({

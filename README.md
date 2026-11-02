@@ -153,9 +153,30 @@ Ensure you have the following installed:
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `VITE_AUTH_API_BASE_URL` | Express auth endpoints URL | `http://localhost:5000/api/auth` |
-| `VITE_CHAT_API_BASE_URL` | Express chat proxy endpoints URL | `http://localhost:5000/api/chat` |
+| `VITE_AUTH_API_BASE_URL` | Express auth endpoints URL | `/api/auth` (proxied) |
+| `VITE_CHAT_API_BASE_URL` | Express chat proxy endpoints URL | `/api/chat` (proxied) |
 | `VITE_DJANGO_API_BASE_URL`| Direct Django API URL (if required) | `http://localhost:8000/api/v1` |
+
+---
+
+## Render Deployment Guide
+
+To deploy this full-stack application as a single Web Service on [Render](https://render.com/):
+
+1. **New Web Service**:
+   - Connect your GitHub repository (`devstarkedge/Chatbot-frontend`).
+2. **Build & Start Settings**:
+   - **Environment**: `Node`
+   - **Build Command**: `npm run build`
+   - **Start Command**: `npm start`
+3. **Environment Variables**:
+   In the Render dashboard under **Environment**, add:
+   - `NODE_ENV`: `production`
+   - `MONGODB_URI`: `<Your MongoDB Atlas connection URI>`
+   - `JWT_SECRET`: `<Your secure random string>`
+   - `DJANGO_API_BASE_URL`: `http://localhost:8000/api/v1` (or your deployed Django backend URL)
+
+Render will automatically run `npm run build` (which installs all server & client dependencies and compiles the Vite React frontend), then launch `node server/server.js`. The Express server will serve both the React app and the API endpoints on the same domain.
 
 ---
 
