@@ -20,7 +20,7 @@ function Dashboard({
   const chatbotOptions = [
     {
       id: 'support',
-      title: 'Customer Support Bot',
+      title: 'Customer Assistance',
       desc: 'Instant replies, ticket routing, and conversational FAQs for your customers.',
       icon: <MessageSquare size={24} color="#6366f1" />,
       bg: 'rgba(99, 102, 241, 0.15)',

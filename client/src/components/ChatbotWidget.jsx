@@ -28,20 +28,23 @@ const API_BASE = (
 ).replace(/\/+$/, '');
 
 // Bot persona configurations
+const CUSTOMER_ASSISTANCE_PERSONA = {
+  badge: 'Customer Assistance',
+  color: '#6366f1',
+  accentClass: 'persona-support',
+  icon: MessageSquare,
+  tagline: 'Instant answers, ticket resolutions & system troubleshooting.',
+  prompts: [
+    { label: '🔑 Reset account & password', query: 'How do I reset my password and recover my account?' },
+    { label: '⚡ System features & tools', query: 'What features are supported in this platform?' },
+    { label: '🛠️ Troubleshoot login issue', query: 'I am experiencing an issue with my login session. Can you help?' },
+    { label: '👤 Connect to human support', query: 'How can I connect with human technical support?' },
+  ],
+};
+
 const BOT_PERSONAS = {
-  'Customer Support Bot': {
-    badge: 'Customer Support AI',
-    color: '#6366f1',
-    accentClass: 'persona-support',
-    icon: MessageSquare,
-    tagline: 'Instant answers, ticket resolutions & system troubleshooting.',
-    prompts: [
-      { label: '🔑 Reset account & password', query: 'How do I reset my password and recover my account?' },
-      { label: '⚡ System features & tools', query: 'What features are supported in this platform?' },
-      { label: '🛠️ Troubleshoot login issue', query: 'I am experiencing an issue with my login session. Can you help?' },
-      { label: '👤 Connect to human support', query: 'How can I connect with human technical support?' },
-    ],
-  },
+  'Customer Assistance': CUSTOMER_ASSISTANCE_PERSONA,
+  'Customer Support Bot': CUSTOMER_ASSISTANCE_PERSONA,
   'Knowledge Base / RAG Bot': {
     badge: 'Knowledge Base & RAG',
     color: '#38bdf8',
@@ -449,6 +452,7 @@ export default function ChatbotWidget({
   const abortRef = useRef(null);
   const textareaRef = useRef(null);
   const nextIdRef = useRef(2);
+  const hasLoadedHistoryRef = useRef(false);
 
   const nextId = () => nextIdRef.current++;
 
@@ -487,8 +491,11 @@ export default function ChatbotWidget({
   // ---------------------------------------------------------------------------
   // Backend API Actions (routed through Node.js backend)
   // ---------------------------------------------------------------------------
-  const loadChatSessions = async () => {
-    setIsLoadingHistory(true);
+  const loadChatSessions = async (silent = false) => {
+    // Only show loading spinner if we don't already have sessions loaded
+    if (!silent && !chatSessions.length) {
+      setIsLoadingHistory(true);
+    }
     setHistoryError(null);
     try {
       const res = await fetch(`${API_BASE}/chats`, {
@@ -497,9 +504,12 @@ export default function ChatbotWidget({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setChatSessions(data.sessions || []);
+      hasLoadedHistoryRef.current = true;
     } catch (err) {
       console.error('Chat history error:', err);
-      setHistoryError(err.message || 'Could not load chat history.');
+      if (!chatSessions.length) {
+        setHistoryError(err.message || 'Could not load chat history.');
+      }
     } finally {
       setIsLoadingHistory(false);
     }
@@ -508,7 +518,8 @@ export default function ChatbotWidget({
   const toggleHistory = () => {
     const opening = !isHistoryOpen;
     setIsHistoryOpen(opening);
-    if (opening) {
+    // Only fetch from API if we haven't loaded history yet
+    if (opening && !hasLoadedHistoryRef.current) {
       loadChatSessions();
     }
   };
@@ -705,6 +716,7 @@ export default function ChatbotWidget({
     setError(null);
     setIsTyping(false);
     setIsHistoryOpen(false);
+    hasLoadedHistoryRef.current = false;
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.overflowY = 'hidden';
@@ -869,15 +881,7 @@ export default function ChatbotWidget({
               aria-label="Conversation history"
             >
               <div className="chat-history-panel-header">
-                <button
-                  type="button"
-                  className="chat-history-new-chat-btn"
-                  onClick={handleNewChat}
-                  title="Start fresh conversation"
-                >
-                  <Plus size={14} />
-                  <span>New Chat</span>
-                </button>
+                <span className="chat-history-header-title">History</span>
                 <button
                   type="button"
                   className="chat-history-close-btn"

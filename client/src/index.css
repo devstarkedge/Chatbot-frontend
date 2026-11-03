@@ -1267,37 +1267,19 @@ body {
 }
 
 .chat-history-panel-header {
-  padding: 0.75rem 0.9rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.6rem;
   background: rgba(22, 30, 50, 0.6);
 }
 
-.chat-history-new-chat-btn {
-  flex: 1;
-  background: rgba(99, 102, 241, 0.2);
-  border: 1px solid rgba(99, 102, 241, 0.45);
-  border-radius: var(--radius-sm);
-  color: #c7d2fe;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.45rem 0.75rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  transition: all var(--transition-fast);
-}
-
-.chat-history-new-chat-btn:hover {
-  background: rgba(99, 102, 241, 0.35);
-  border-color: rgba(99, 102, 241, 0.65);
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+.chat-history-header-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
 }
 
 .chat-history-close-btn {
@@ -1305,7 +1287,7 @@ body {
   border: 1px solid transparent;
   color: var(--text-muted);
   border-radius: var(--radius-sm);
-  padding: 0.4rem;
+  padding: 0.35rem;
   cursor: pointer;
   display: flex;
   align-items: center;

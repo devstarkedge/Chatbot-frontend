@@ -16,7 +16,7 @@ function App() {
 
   // Chatbot State
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [selectedBotOption, setSelectedBotOption] = useState('Customer Support Bot');
+  const [selectedBotOption, setSelectedBotOption] = useState('Customer Assistance');
 
   // Restore saved session on initial load using the token
   useEffect(() => {
