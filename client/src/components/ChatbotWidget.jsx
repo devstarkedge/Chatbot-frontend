@@ -9,12 +9,8 @@ import {
   Copy,
   Check,
   RotateCcw,
-  Volume2,
-  VolumeX,
   Maximize2,
   Minimize2,
-  ThumbsUp,
-  ThumbsDown,
   Sparkles,
   Mic,
   MicOff,
@@ -103,29 +99,6 @@ const DEFAULT_PERSONA = {
   ],
 };
 
-// Play audio chime synthesized with Web Audio API (zero external assets)
-function playNotificationChime() {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1); // A5
-    gain.gain.setValueAtTime(0.05, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.22);
-  } catch {
-    // Audio context may be restricted by autoplay policy
-  }
-}
 
 // Format relative or local time
 function formatTimestamp(isoString) {
@@ -460,9 +433,6 @@ export default function ChatbotWidget({
 
   // Widget Window Controls
   const [isExpanded, setIsExpanded] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    return localStorage.getItem('chatbot_sound_enabled') !== 'false';
-  });
 
   // History Drawer State
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -477,7 +447,6 @@ export default function ChatbotWidget({
 
   // UI Micro-interactions
   const [copiedMessageId, setCopiedMessageId] = useState(null);
-  const [feedbackState, setFeedbackState] = useState({});
   const [isListening, setIsListening] = useState(false);
 
   const messagesEndRef = useRef(null);
@@ -493,11 +462,6 @@ export default function ChatbotWidget({
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isChatOpen, isTyping]);
-
-  // Persist sound preference
-  useEffect(() => {
-    localStorage.setItem('chatbot_sound_enabled', soundEnabled);
-  }, [soundEnabled]);
 
   // Health check on mount
   useEffect(() => {
@@ -687,10 +651,6 @@ export default function ChatbotWidget({
         },
       ]);
 
-      if (soundEnabled) {
-        playNotificationChime();
-      }
-
       if (isHistoryOpen) {
         await loadChatSessions();
       }
@@ -758,14 +718,6 @@ export default function ChatbotWidget({
       setCopiedMessageId(msgId);
       setTimeout(() => setCopiedMessageId(null), 2000);
     });
-  };
-
-  // Feedback reaction helper
-  const handleFeedback = (msgId, type) => {
-    setFeedbackState((prev) => ({
-      ...prev,
-      [msgId]: prev[msgId] === type ? null : type,
-    }));
   };
 
   // Voice speech-to-text dictation
@@ -879,7 +831,6 @@ export default function ChatbotWidget({
               <div className="chat-bot-names">
                 <div className="chat-bot-title-row">
                   <h4>{selectedBotOption}</h4>
-                  <span className="chat-bot-persona-tag">{persona.badge}</span>
                 </div>
                 <div className="chat-bot-status-row">
                   <span
@@ -901,17 +852,6 @@ export default function ChatbotWidget({
 
             {/* Header Controls */}
             <div className="chat-header-actions">
-              {/* Sound Toggle */}
-              <button
-                type="button"
-                className={`chat-icon-btn ${soundEnabled ? 'active' : ''}`}
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                title={soundEnabled ? 'Mute notification sound' : 'Enable notification sound'}
-                aria-label="Toggle chat sounds"
-              >
-                {soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
-              </button>
-
               {/* History Toggle */}
               <button
                 type="button"
@@ -1204,23 +1144,12 @@ export default function ChatbotWidget({
                   <PersonaIcon size={26} />
                 </div>
                 <h3>{selectedBotOption}</h3>
-                <p className="welcome-tagline">{persona.tagline}</p>
-                <div className="welcome-features-list">
-                  <span className="feature-pill">⚡ MongoDB RAG Grounded</span>
-                  <span className="feature-pill">🛡️ Secure Session</span>
-                  <span className="feature-pill">✨ Markdown & Code</span>
-                </div>
               </div>
             )}
 
             {/* Render Messages */}
-            {messages.map((m, index) => {
+            {messages.map((m) => {
               const isUser = m.sender === 'user';
-              const isLastBotMsg =
-                !isUser &&
-                index === messages.length - 1 &&
-                !isTyping;
-              const feedback = feedbackState[m.id];
 
               return (
                 <div
@@ -1272,42 +1201,6 @@ export default function ChatbotWidget({
                             <Copy size={12} />
                           )}
                         </button>
-
-                        {/* Thumbs Up / Down for Bot responses */}
-                        {!isUser && !m.isError && (
-                          <>
-                            <button
-                              type="button"
-                              className={`msg-action-btn ${feedback === 'like' ? 'active-like' : ''}`}
-                              onClick={() => handleFeedback(m.id, 'like')}
-                              title="Helpful response"
-                            >
-                              <ThumbsUp size={12} />
-                            </button>
-                            <button
-                              type="button"
-                              className={`msg-action-btn ${feedback === 'dislike' ? 'active-dislike' : ''}`}
-                              onClick={() => handleFeedback(m.id, 'dislike')}
-                              title="Not helpful"
-                            >
-                              <ThumbsDown size={12} />
-                            </button>
-                          </>
-                        )}
-
-                        {/* Retry / Regenerate button for errors or last bot response */}
-                        {!isUser && (m.isError || isLastBotMsg) && (
-                          <button
-                            type="button"
-                            className="msg-action-btn retry-btn"
-                            onClick={handleRetryLast}
-                            disabled={isTyping}
-                            title="Regenerate or retry last question"
-                          >
-                            <RotateCcw size={12} />
-                            <span>Retry</span>
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1342,25 +1235,6 @@ export default function ChatbotWidget({
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Starter & Suggestion Chips */}
-          <div className="chat-quick-options" aria-label="Suggested questions">
-            <span className="quick-options-label">
-              <Sparkles size={12} /> Suggestions:
-            </span>
-            <div className="quick-chips-scroller">
-              {persona.prompts.map((p, idx) => (
-                <button
-                  type="button"
-                  key={idx}
-                  className="quick-chip"
-                  onClick={() => sendQuestion(p.query)}
-                  disabled={isTyping}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Global Network / API Error Banner */}
           {error && (
