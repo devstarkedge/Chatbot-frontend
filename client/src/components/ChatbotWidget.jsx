@@ -8,12 +8,9 @@ import {
   History as HistoryIcon,
   Copy,
   Check,
-  RotateCcw,
   Maximize2,
   Minimize2,
   Sparkles,
-  Mic,
-  MicOff,
   Search,
   Trash2,
   Edit2,
@@ -447,7 +444,6 @@ export default function ChatbotWidget({
 
   // UI Micro-interactions
   const [copiedMessageId, setCopiedMessageId] = useState(null);
-  const [isListening, setIsListening] = useState(false);
 
   const messagesEndRef = useRef(null);
   const abortRef = useRef(null);
@@ -696,7 +692,9 @@ export default function ChatbotWidget({
   const handleTextareaInput = (e) => {
     setInput(e.target.value);
     e.target.style.height = 'auto';
-    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+    const targetHeight = Math.min(e.target.scrollHeight, 120);
+    e.target.style.height = `${targetHeight}px`;
+    e.target.style.overflowY = e.target.scrollHeight > 120 ? 'auto' : 'hidden';
   };
 
   const handleNewChat = () => {
@@ -709,6 +707,7 @@ export default function ChatbotWidget({
     setIsHistoryOpen(false);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.overflowY = 'hidden';
     }
   };
 
@@ -718,44 +717,6 @@ export default function ChatbotWidget({
       setCopiedMessageId(msgId);
       setTimeout(() => setCopiedMessageId(null), 2000);
     });
-  };
-
-  // Voice speech-to-text dictation
-  const handleVoiceToggle = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Speech recognition is not supported in this browser.');
-      return;
-    }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
-
-      recognition.onstart = () => setIsListening(true);
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
-        setIsListening(false);
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-        }
-      };
-      recognition.onerror = () => setIsListening(false);
-      recognition.onend = () => setIsListening(false);
-      recognition.start();
-    } catch (e) {
-      console.warn('Speech recognition start failed', e);
-      setIsListening(false);
-    }
   };
 
   // Filtered history sessions
@@ -908,35 +869,24 @@ export default function ChatbotWidget({
               aria-label="Conversation history"
             >
               <div className="chat-history-panel-header">
-                <div className="chat-history-title-area">
-                  <HistoryIcon size={16} />
-                  <h5>Saved Conversations</h5>
-                </div>
-                <div className="chat-history-header-actions">
-                  <button
-                    type="button"
-                    className="chat-history-header-btn"
-                    onClick={loadChatSessions}
-                    disabled={isLoadingHistory}
-                    title="Refresh history"
-                  >
-                    {isLoadingHistory ? (
-                      <Loader2 size={13} className="spin" />
-                    ) : (
-                      <RotateCcw size={13} />
-                    )}
-                    <span>Refresh</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="chat-history-header-btn btn-new-history"
-                    onClick={handleNewChat}
-                    title="Start fresh conversation"
-                  >
-                    <Plus size={13} />
-                    <span>New</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="chat-history-new-chat-btn"
+                  onClick={handleNewChat}
+                  title="Start fresh conversation"
+                >
+                  <Plus size={14} />
+                  <span>New Chat</span>
+                </button>
+                <button
+                  type="button"
+                  className="chat-history-close-btn"
+                  onClick={() => setIsHistoryOpen(false)}
+                  title="Close history"
+                  aria-label="Close history"
+                >
+                  <X size={15} />
+                </button>
               </div>
 
               {/* Search History */}
@@ -1258,7 +1208,7 @@ export default function ChatbotWidget({
                 ref={textareaRef}
                 className="chat-textarea-field"
                 rows={1}
-                placeholder={`Ask ${selectedBotOption}… (Press Enter to send, Shift+Enter for newline)`}
+                placeholder={`Ask ${selectedBotOption}…`}
                 value={input}
                 onChange={handleTextareaInput}
                 onKeyDown={handleKeyDown}
@@ -1276,6 +1226,7 @@ export default function ChatbotWidget({
                     setInput('');
                     if (textareaRef.current) {
                       textareaRef.current.style.height = 'auto';
+                      textareaRef.current.style.overflowY = 'hidden';
                       textareaRef.current.focus();
                     }
                   }}
@@ -1287,21 +1238,6 @@ export default function ChatbotWidget({
             </div>
 
             <div className="chat-input-actions">
-              {/* Voice Speech-to-Text Button */}
-              <button
-                type="button"
-                className={`chat-action-icon-btn ${isListening ? 'listening' : ''}`}
-                onClick={handleVoiceToggle}
-                title={isListening ? 'Listening… click to stop' : 'Voice input (Speech to text)'}
-                aria-label="Voice input"
-              >
-                {isListening ? (
-                  <MicOff size={18} className="mic-recording-pulse" />
-                ) : (
-                  <Mic size={18} />
-                )}
-              </button>
-
               {/* Submit / Send Button */}
               <button
                 type="submit"
